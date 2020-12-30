@@ -85,7 +85,7 @@ func GetCommands() Commands {
 
 	m["csession"] = CommandStruct{
 		Prefix:      "csession",
-		Description: "collect session and drop current session",
+		Description: "collect a session and drop the current session",
 		Function:    CollectSessionCommand,
 	}
 
