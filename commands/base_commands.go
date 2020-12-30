@@ -107,6 +107,7 @@ func CollectSession(memfs *memory.FileSystem, id string, stashCurrent bool, newI
 	memfs.ReplaceFS(fs)
 }
 
+// clears screen
 func ClearScreen() {
 	screen.Clear()
 	screen.MoveTopLeft()
