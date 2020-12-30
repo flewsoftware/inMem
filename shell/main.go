@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// starts shell interface and starts accepting input from stdin
 func StartShell() {
 	// This variable represents the current directory
 	var currentDirectory = "/"
@@ -58,6 +59,7 @@ func StartShell() {
 
 var interStd internal_processes.InternalStd
 
+// checks for proceses marked as deleted in the internal process queue and deletes them
 func CleanUpProcesses() {
 	go func() {
 		for {
@@ -115,6 +117,7 @@ func sliceLowerCase(slice2 []string) []string {
 	return slice2
 }
 
+// prints shell info
 func PrintShellInfo() {
 	d := color.New(color.FgHiGreen, color.Bold)
 
