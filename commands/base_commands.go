@@ -85,6 +85,7 @@ func HostData(memfs *memory.FileSystem, location string, port int, pattern strin
 	return nil
 }
 
+// stashes the session in session store
 func StashSession(memfs *memory.FileSystem, id string) {
 	sessionStore[id] = memory.FileSystemStoreEntry{
 		FS:     *memfs,
