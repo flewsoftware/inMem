@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+// downloads a file from a website into memory file system
 func HttpGetToMem(memfs *memory.FileSystem, url string, fileName string) error {
 	resp, err := http.Get(url)
 	if err != nil {
