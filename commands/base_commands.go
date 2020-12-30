@@ -94,6 +94,7 @@ func StashSession(memfs *memory.FileSystem, id string) {
 	memfs.ClearFS()
 }
 
+// collects a session from the session store
 func CollectSession(memfs *memory.FileSystem, id string, stashCurrent bool, newId string) {
 	s := sessionStore[id]
 	fs := s.FS.MFileSystem
