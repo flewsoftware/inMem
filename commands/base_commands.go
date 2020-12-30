@@ -6,6 +6,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/inancgumus/screen"
 	"inMem/memory"
 	"io/ioutil"
 	"log"
@@ -50,21 +51,22 @@ func HostData(memfs *memory.FileSystem, location string, port int, pattern strin
 	}
 
 	KeepHosting := true
-	p := len(processes)
+	p := len(CommandProcesses)
 	t := time.Now()
-	processes = append(processes, Process{
+	CommandProcesses = append(CommandProcesses, CommandProcess{
 		ProcessName: "Hosting " + location + " in port " + strconv.Itoa(port),
 		Command:     GetCommands()["host"],
 		KillFunc: func() {
 			KeepHosting = false
-			processes[p].Killed = true
+			CommandProcesses[p].Killed = true
 		},
 		Killed:  false,
 		Created: t.Unix(),
+		End:     0,
 	})
 
 	defer func() {
-		processes[p].Killed = true
+		CommandProcesses[p].setKilled()
 	}()
 
 	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
@@ -99,4 +101,9 @@ func CollectSession(memfs *memory.FileSystem, id string, stashCurrent bool, newI
 		}
 	}
 	memfs.ReplaceFS(fs)
+}
+
+func ClearScreen() {
+	screen.Clear()
+	screen.MoveTopLeft()
 }

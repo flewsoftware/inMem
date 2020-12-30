@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/awnumar/memguard"
+	"inMem/internal_processes"
 	"inMem/memory"
 	"log"
 	"os"
@@ -21,7 +22,7 @@ func DownloadCommand(c []string, dir *string, fs *memory.FileSystem) {
 	fileName := c[1]
 	url := c[2]
 
-	fmt.Printf("Downloading %s", url)
+	fmt.Printf("Downloading %s\n", url)
 	err := HttpGetToMem(fs, url, *dir+"/"+fileName)
 	if err != nil {
 		log.Println(err)
@@ -36,10 +37,12 @@ func HostCommand(c []string, dir *string, fs *memory.FileSystem) {
 	if err != nil {
 		log.Println("Port is not an number")
 	} else {
-		err := HostData(fs, *dir+"/"+location, port, pattern)
-		if err != nil {
-			fmt.Printf("cant host %s: %v", location, err)
-		}
+		go func() {
+			err := HostData(fs, *dir+"/"+location, port, pattern)
+			if err != nil {
+				fmt.Printf("cant host %s: %v\n", location, err)
+			}
+		}()
 	}
 
 }
@@ -47,35 +50,47 @@ func HostCommand(c []string, dir *string, fs *memory.FileSystem) {
 func KillCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	var killedProcesses int = 0
 
-	for i := 0; i < len(processes); i++ {
-		if processes[i].Killed == false {
-			fmt.Printf("Killing %s child of command %s\n", processes[i].ProcessName, processes[i].Command.Prefix)
-			processes[i].KillFunc()
-			processes[i] = Process{}
-			processes[i].Killed = true
+	for i := 0; i < len(CommandProcesses); i++ {
+		if CommandProcesses[i].Killed == false {
+			fmt.Printf("Killing %s child of command %s\n", CommandProcesses[i].ProcessName, CommandProcesses[i].Command.Prefix)
+			CommandProcesses[i].KillFunc()
+			CommandProcesses[i].Killed = true
+			CommandProcesses[i].End = time.Now().Unix()
 			killedProcesses++
 		}
 	}
 	fmt.Printf("Killed %d procces(es)\n", killedProcesses)
 }
 
-func ListProcesses(_ []string, _ *string, _ *memory.FileSystem) {
-	var processCount int = 0
+func ListProcessesCommand(_ []string, _ *string, _ *memory.FileSystem) {
+	var processCount = 0
 	t := time.Now()
 	fmt.Printf("Current time: %d sec\n", t.Unix())
-	for i := 0; i < len(processes); i++ {
-		if processes[i].Killed == false {
-			fmt.Printf("proccess: %s | Created: %d | Runing for: %d sec \n", processes[i].ProcessName, processes[i].Created, t.Unix()-processes[i].Created)
-			processCount++
+	for i := 0; i < len(CommandProcesses); i++ {
+		var runningFor int64
+		if CommandProcesses[i].Deleted {
+			continue
 		}
+		if CommandProcesses[i].End > 0 {
+			runningFor = CommandProcesses[i].End - CommandProcesses[i].Created
+		} else {
+			runningFor = t.Unix() - CommandProcesses[i].Created
+		}
+		fmt.Printf("proccess: %s | Created: %d | Runing for: %d sec | Alive: %t \n", CommandProcesses[i].ProcessName, CommandProcesses[i].Created, runningFor, !CommandProcesses[i].Killed)
+		processCount++
+
 	}
+}
+
+func CleanProcessList(_ []string, _ *string, _ *memory.FileSystem) {
+	CommandProcesses.Clear()
 }
 
 func ExitCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	memguard.SafeExit(0)
 }
 
-func CdCommand(c []string, dir *string, fs *memory.FileSystem) {
+func ChangeDirCommand(c []string, dir *string, fs *memory.FileSystem) {
 	newDir := c[1]
 	if newDir == "." {
 		newDir = *dir
@@ -88,7 +103,7 @@ func CdCommand(c []string, dir *string, fs *memory.FileSystem) {
 	}
 }
 
-func MkDirCommand(c []string, _ *string, fs *memory.FileSystem) {
+func MakeDirCommand(c []string, _ *string, fs *memory.FileSystem) {
 	newDir := c[1]
 
 	err := fs.MFileSystem.Mkdir(newDir, os.ModeDir)
@@ -97,7 +112,7 @@ func MkDirCommand(c []string, _ *string, fs *memory.FileSystem) {
 	}
 }
 
-func LsCommand(_ []string, dir *string, fs *memory.FileSystem) {
+func ListCommand(_ []string, dir *string, fs *memory.FileSystem) {
 	f, err := fs.MFileSystem.ReadDir(*dir)
 	w := tabwriter.NewWriter(os.Stdout, 1, 3, 3, ' ', 0)
 
@@ -123,7 +138,7 @@ func NewSessionCommand(_ []string, _ *string, fs *memory.FileSystem) {
 	fmt.Println("New session created")
 }
 
-func FHcommand(c []string, _ *string, fs *memory.FileSystem) {
+func FileHashCommand(c []string, _ *string, fs *memory.FileSystem) {
 	file := c[1]
 	hash, err := fs.GetHash(file)
 	if err != nil {
@@ -145,7 +160,7 @@ func HelpCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	w.Flush()
 }
 
-func CreateFileCommand(c []string, dir *string, fs *memory.FileSystem) {
+func MakeFileCommand(c []string, dir *string, fs *memory.FileSystem) {
 	fileName := c[1]
 	_, err := fs.CreateFile(*dir + "/" + fileName)
 	if err != nil {
@@ -169,7 +184,7 @@ func StashSessionCommand(c []string, dir *string, fs *memory.FileSystem) {
 	*dir = "/"
 }
 
-func LsSessionsCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func ListSessionsCommand(_ []string, _ *string, _ *memory.FileSystem) {
 
 	w := tabwriter.NewWriter(os.Stdout, 3, 1, 1, ' ', 0)
 	fmt.Fprint(w, "id\tstored_time\n")
@@ -187,4 +202,12 @@ func LsSessionsCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	if err != nil {
 		fmt.Printf("unable to list sessions: %v", err)
 	}
+}
+
+func ProcessOutCommand(_ []string, _ *string, _ *memory.FileSystem) {
+	internal_processes.InterSTD.PrintToStdOut()
+}
+
+func ClearCommand(_ []string, _ *string, _ *memory.FileSystem) {
+	ClearScreen()
 }

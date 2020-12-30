@@ -4,15 +4,26 @@ This file contains all types in commands package
 
 package commands
 
-import "inMem/memory"
+import (
+	"inMem/memory"
+)
 
 type CommandStruct struct {
 	Prefix      string
 	Description string
+	Function    func(c []string, dir *string, fs *memory.FileSystem)
 }
 
+type CommandInputs struct {
+	TokenizedCommands []string
+	Directory         *string
+	MemFS             *memory.FileSystem
+}
+
+type Commands map[string]CommandStruct
+
 // process struct (used as a registry entry)
-type Process struct {
+type CommandProcess struct {
 	// name of the process
 	ProcessName string
 
@@ -27,12 +38,12 @@ type Process struct {
 
 	// Created time (unix)
 	Created int64
+
+	// End time
+	End int64
+
+	Deleted bool
 }
 
-type CommandInputs struct {
-	TokenizedCommands []string
-	Directory         *string
-	MemFS             *memory.FileSystem
-}
-
-type Commands map[string]CommandStruct
+// process store (used to store Processes)
+type CommandProcessStore []CommandProcess

@@ -10,8 +10,12 @@ type FileSystem struct {
 // file system store
 type FileSystemStore map[string]FileSystemStoreEntry
 
-// file system entry
+// file system store entry
 type FileSystemStoreEntry struct {
-	FS     FileSystem
+
+	// file system
+	FS FileSystem
+
+	// the time when the file system was stashed
 	Stored int64
 }

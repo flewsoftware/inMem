@@ -6,6 +6,8 @@ package commands
 
 import "inMem/memory"
 
-var processes []Process
+// stores information about running CommandProcesses
+var CommandProcesses CommandProcessStore
 
+// stores stashed sessions(file systems)
 var sessionStore = make(memory.FileSystemStore)
