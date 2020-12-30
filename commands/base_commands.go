@@ -40,6 +40,7 @@ func HttpGetToMem(memfs *memory.FileSystem, url string, fileName string) error {
 	return nil
 }
 
+// hosts data
 func HostData(memfs *memory.FileSystem, location string, port int, pattern string) error {
 	f, err := memfs.ReadFS(location)
 	if err != nil {
