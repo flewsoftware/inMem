@@ -103,7 +103,7 @@ func GetCommands() Commands {
 
 	m["pout"] = CommandStruct{
 		Prefix:      "pout",
-		Description: "out puts process stdout",
+		Description: "outputs process stdout",
 		Function:    ProcessOutCommand,
 	}
 
