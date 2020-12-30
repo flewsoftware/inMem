@@ -112,5 +112,8 @@ func GetCommands() Commands {
 		Description: "clears the screen",
 		Function:    ClearCommand,
 	}
+
+	// add your custom commands here
+
 	return m
 }
