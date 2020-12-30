@@ -14,13 +14,21 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"sync"
 	"text/tabwriter"
 	"time"
 )
 
-func DownloadCommand(c []string, dir *string, fs *memory.FileSystem) {
+func DownloadCommand(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	fileName := c[1]
 	url := c[2]
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("Download failed due to not having enough args:", err)
+		}
+	}()
 
 	fmt.Printf("Downloading %s\n", url)
 	err := HttpGetToMem(fs, url, *dir+"/"+fileName)
@@ -29,7 +37,14 @@ func DownloadCommand(c []string, dir *string, fs *memory.FileSystem) {
 	}
 }
 
-func HostCommand(c []string, dir *string, fs *memory.FileSystem) {
+func HostCommand(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("Hosting failed due to not having enough args:", err)
+		}
+	}()
+
 	location := c[1]
 	port, err := strconv.Atoi(c[2])
 	pattern := c[3]
@@ -47,7 +62,9 @@ func HostCommand(c []string, dir *string, fs *memory.FileSystem) {
 
 }
 
-func KillCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func KillCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	var killedProcesses int = 0
 
 	for i := 0; i < len(CommandProcesses); i++ {
@@ -62,7 +79,9 @@ func KillCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	fmt.Printf("Killed %d procces(es)\n", killedProcesses)
 }
 
-func ListProcessesCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func ListProcessesCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	var processCount = 0
 	t := time.Now()
 	fmt.Printf("Current time: %d sec\n", t.Unix())
@@ -82,15 +101,26 @@ func ListProcessesCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	}
 }
 
-func CleanProcessList(_ []string, _ *string, _ *memory.FileSystem) {
+func CleanProcessList(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	CommandProcesses.Clear()
 }
 
-func ExitCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func ExitCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	memguard.SafeExit(0)
 }
 
-func ChangeDirCommand(c []string, dir *string, fs *memory.FileSystem) {
+func ChangeDirCommand(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("change dir failed due to not having enough args:", err)
+		}
+	}()
+
 	newDir := c[1]
 	if newDir == "." {
 		newDir = *dir
@@ -103,7 +133,13 @@ func ChangeDirCommand(c []string, dir *string, fs *memory.FileSystem) {
 	}
 }
 
-func MakeDirCommand(c []string, _ *string, fs *memory.FileSystem) {
+func MakeDirCommand(c []string, _ *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("mkdir failed due to not having enough args:", err)
+		}
+	}()
 	newDir := c[1]
 
 	err := fs.MFileSystem.Mkdir(newDir, os.ModeDir)
@@ -112,7 +148,9 @@ func MakeDirCommand(c []string, _ *string, fs *memory.FileSystem) {
 	}
 }
 
-func ListCommand(_ []string, dir *string, fs *memory.FileSystem) {
+func ListCommand(_ []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	f, err := fs.MFileSystem.ReadDir(*dir)
 	w := tabwriter.NewWriter(os.Stdout, 1, 3, 3, ' ', 0)
 
@@ -132,13 +170,22 @@ func ListCommand(_ []string, dir *string, fs *memory.FileSystem) {
 
 }
 
-func NewSessionCommand(_ []string, _ *string, fs *memory.FileSystem) {
+func NewSessionCommand(_ []string, _ *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	*fs = memory.FileSystem{}
 	*fs = memory.CreateMemoryFileSystem()
 	fmt.Println("New session created")
 }
 
-func FileHashCommand(c []string, _ *string, fs *memory.FileSystem) {
+func FileHashCommand(c []string, _ *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("FileHash failed due to not having enough args:", err)
+		}
+	}()
+
 	file := c[1]
 	hash, err := fs.GetHash(file)
 	if err != nil {
@@ -148,7 +195,9 @@ func FileHashCommand(c []string, _ *string, fs *memory.FileSystem) {
 	}
 }
 
-func HelpCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func HelpCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	p := GetCommands()
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
 	for _, val := range p {
@@ -160,7 +209,14 @@ func HelpCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	w.Flush()
 }
 
-func MakeFileCommand(c []string, dir *string, fs *memory.FileSystem) {
+func MakeFileCommand(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("make file failed due to not having enough args:", err)
+		}
+	}()
+
 	fileName := c[1]
 	_, err := fs.CreateFile(*dir + "/" + fileName)
 	if err != nil {
@@ -168,7 +224,14 @@ func MakeFileCommand(c []string, dir *string, fs *memory.FileSystem) {
 	}
 }
 
-func CollectSessionCommand(c []string, dir *string, fs *memory.FileSystem) {
+func CollectSessionCommand(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("session collection failed due to not having enough args:", err)
+		}
+	}()
+
 	id := c[1]
 	CollectSession(fs, id, false, "")
 	fmt.Print("current session dropped\n")
@@ -176,15 +239,24 @@ func CollectSessionCommand(c []string, dir *string, fs *memory.FileSystem) {
 	*dir = "/"
 }
 
-func StashSessionCommand(c []string, dir *string, fs *memory.FileSystem) {
+func StashSessionCommand(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	id := c[1]
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("session stashing failed due to not having enough args:", err)
+		}
+	}()
+
 	StashSession(fs, id)
 	fmt.Print("current session dropped\n")
 	fmt.Printf("session stashed with id: %s\n", id)
 	*dir = "/"
 }
 
-func ListSessionsCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func ListSessionsCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
 
 	w := tabwriter.NewWriter(os.Stdout, 3, 1, 1, ' ', 0)
 	fmt.Fprint(w, "id\tstored_time\n")
@@ -204,10 +276,13 @@ func ListSessionsCommand(_ []string, _ *string, _ *memory.FileSystem) {
 	}
 }
 
-func ProcessOutCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func ProcessOutCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	internal_processes.InterSTD.PrintToStdOut()
 }
 
-func ClearCommand(_ []string, _ *string, _ *memory.FileSystem) {
+func ClearCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+	defer wg.Done()
 	ClearScreen()
 }

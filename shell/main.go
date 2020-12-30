@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -49,8 +50,13 @@ func StartShell() {
 		// Picks the correct command
 		c := commandPicker(command, commandList)
 
+		var wg sync.WaitGroup
+		wg.Add(1)
 		// Runs it
-		c(tokenizedCommands, &currentDirectory, &memFS)
+
+		c(tokenizedCommands, &currentDirectory, &memFS, &wg)
+
+		wg.Wait()
 
 		fmt.Print("\n")
 	}
@@ -83,7 +89,7 @@ func CleanUpProcesses() {
 }
 
 // returns the matching command
-func commandPicker(command string, commandList commands.Commands) func(c []string, dir *string, fs *memory.FileSystem) {
+func commandPicker(command string, commandList commands.Commands) func(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup) {
 
 	for key := range commandList {
 		if commandMatch(command, commandList[key]) {
@@ -91,7 +97,8 @@ func commandPicker(command string, commandList commands.Commands) func(c []strin
 		}
 	}
 
-	return func(_ []string, _ *string, _ *memory.FileSystem) {
+	return func(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
+		defer wg.Done()
 		fmt.Printf("Invalid command: %s", command)
 	}
 }

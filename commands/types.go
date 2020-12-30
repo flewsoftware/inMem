@@ -6,12 +6,13 @@ package commands
 
 import (
 	"inMem/memory"
+	"sync"
 )
 
 type CommandStruct struct {
 	Prefix      string
 	Description string
-	Function    func(c []string, dir *string, fs *memory.FileSystem)
+	Function    func(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGroup)
 }
 
 type CommandInputs struct {
