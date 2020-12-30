@@ -239,6 +239,9 @@ func StashSessionCommand(c []string, dir *string, fs *memory.FileSystem, wg *syn
 		}
 	}()
 
+	Kill()
+
+	// stashes session with id
 	StashSession(fs, id)
 	fmt.Print("current session dropped\n")
 	fmt.Printf("session stashed with id: %s\n", id)
