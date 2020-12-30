@@ -65,17 +65,7 @@ func HostCommand(c []string, dir *string, fs *memory.FileSystem, wg *sync.WaitGr
 func KillCommand(_ []string, _ *string, _ *memory.FileSystem, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	var killedProcesses int = 0
-
-	for i := 0; i < len(CommandProcesses); i++ {
-		if CommandProcesses[i].Killed == false {
-			fmt.Printf("Killing %s child of command %s\n", CommandProcesses[i].ProcessName, CommandProcesses[i].Command.Prefix)
-			CommandProcesses[i].KillFunc()
-			CommandProcesses[i].Killed = true
-			CommandProcesses[i].End = time.Now().Unix()
-			killedProcesses++
-		}
-	}
+	killedProcesses := Kill()
 	fmt.Printf("Killed %d procces(es)\n", killedProcesses)
 }
 

@@ -112,3 +112,18 @@ func ClearScreen() {
 	screen.Clear()
 	screen.MoveTopLeft()
 }
+
+func Kill() int {
+	var killedProcesses int = 0
+
+	for i := 0; i < len(CommandProcesses); i++ {
+		if CommandProcesses[i].Killed == false {
+			fmt.Printf("Killing %s child of command %s\n", CommandProcesses[i].ProcessName, CommandProcesses[i].Command.Prefix)
+			CommandProcesses[i].KillFunc()
+			CommandProcesses[i].Killed = true
+			CommandProcesses[i].End = time.Now().Unix()
+			killedProcesses++
+		}
+	}
+	return killedProcesses
+}
